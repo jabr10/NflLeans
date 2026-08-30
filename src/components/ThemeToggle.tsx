@@ -18,8 +18,10 @@ function readTheme(): Theme {
 }
 
 function applyTheme(theme: Theme) {
-  document.documentElement.classList.toggle("dark", theme === "dark");
-  document.documentElement.style.colorScheme = theme;
+  const root = document.documentElement;
+  root.dataset.theme = theme;
+  root.style.colorScheme = theme;
+  root.classList.toggle("dark", theme === "dark");
   try {
     localStorage.setItem("nflleans-theme", theme);
   } catch {
@@ -31,13 +33,16 @@ export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>("light");
 
   useEffect(() => {
-    setTheme(readTheme());
+    const current = readTheme();
+    setTheme(current);
+    applyTheme(current);
   }, []);
 
   return (
     <button
       type="button"
       className="tap-target rounded-full border border-rule px-3 text-[13px] font-medium tracking-wide"
+      aria-pressed={theme === "dark"}
       onClick={() => {
         const next = theme === "dark" ? "light" : "dark";
         setTheme(next);

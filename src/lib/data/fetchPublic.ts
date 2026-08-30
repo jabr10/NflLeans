@@ -19,6 +19,7 @@ export async function fetchPublicJson<T>(
     ttlMs: number;
     timeoutMs?: number;
     source: string;
+    transform?: (raw: unknown) => T;
   },
 ): Promise<T> {
   const cached = await readCache<T>(opts.cacheKey);
@@ -30,16 +31,17 @@ export async function fetchPublicJson<T>(
   try {
     const res = await fetch(url, {
       signal: controller.signal,
+      cache: "no-store",
       headers: {
         "User-Agent": UA,
         Accept: "application/json",
       },
-      next: { revalidate: Math.max(60, Math.round(opts.ttlMs / 1000)) },
     });
     if (!res.ok) {
       throw new SourceError(`${opts.source} returned ${res.status}`, opts.source);
     }
-    const data = (await res.json()) as T;
+    const raw: unknown = await res.json();
+    const data = opts.transform ? opts.transform(raw) : (raw as T);
     await writeCache(opts.cacheKey, data, opts.ttlMs);
     return data;
   } catch (err) {

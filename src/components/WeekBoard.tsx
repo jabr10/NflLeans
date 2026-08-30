@@ -63,7 +63,11 @@ export function WeekBoard({ board }: { board: ResearchBoard }) {
         <input
           id="player-search"
           className="tap-target search"
-          type="search"
+          type="text"
+          inputMode="search"
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
           placeholder="Search players"
           value={query}
           onChange={(e) => setQuery(e.target.value)}

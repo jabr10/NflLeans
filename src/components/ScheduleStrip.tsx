@@ -22,9 +22,18 @@ export function ScheduleStrip({ schedule }: { schedule: WeekSchedule }) {
               {game.away.abbr} @ {game.home.abbr}
             </span>
             <span className="text-ink-soft"> · {formatKickoff(game.kickoff)}</span>
+            {game.completed ? <span className="text-ink-soft"> · Final</span> : null}
           </li>
         ))}
       </ol>
+      {week.isPreseason ? (
+        <div className="honest">
+          <p>
+            {week.label} is still preseason. NflLeans does not invent injury-to-prop leans for an
+            empty regular-season card. Week 1 is posted below when ESPN has the slate.
+          </p>
+        </div>
+      ) : null}
     </section>
   );
 }

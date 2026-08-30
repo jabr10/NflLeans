@@ -132,10 +132,35 @@ export async function fetchCurrentScoreboard(): Promise<ScoreboardJson> {
 
 export async function fetchInjuries(): Promise<InjuryJson> {
   return fetchPublicJson<InjuryJson>(`${SITE}/injuries`, {
-    cacheKey: "injuries",
+    cacheKey: "injuries-slim",
     ttlMs: 15 * 60 * 1000,
     timeoutMs: 12_000,
     source: "ESPN injuries",
+    transform: (raw) => {
+      const data = raw as InjuryJson;
+      return {
+        injuries: (data.injuries ?? []).map((team) => ({
+          id: team.id,
+          displayName: team.displayName,
+          injuries: (team.injuries ?? []).map((row) => ({
+            id: row.id,
+            longComment: row.longComment,
+            shortComment: row.shortComment,
+            status: row.status,
+            date: row.date,
+            athlete: row.athlete
+              ? {
+                  id: row.athlete.id,
+                  displayName: row.athlete.displayName,
+                  links: row.athlete.links,
+                  position: row.athlete.position,
+                }
+              : undefined,
+            details: row.details,
+          })),
+        })),
+      };
+    },
   });
 }
 
