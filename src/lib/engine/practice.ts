@@ -71,6 +71,17 @@ export function looksLikeRest(text: string | null | undefined): boolean {
   );
 }
 
+/** True only when the sourced text describes an injury or absence — not a trade/stats blurb. */
+export function looksLikeInjuryNote(text: string | null | undefined): boolean {
+  if (!text) return false;
+  if (/\([a-z][a-z /-]{2,}\)/i.test(text) && /\b(ankle|knee|hamstring|concussion|shoulder|foot|ribs|wrist|hand|groin|quad|calf|back|neck|hip|elbow|thumb|toe|achilles|acl|mcl|pcl|illness|undisclosed)\b/i.test(text)) {
+    return true;
+  }
+  return /\b(sidelined|week-to-week|day-to-day|did not practice|limited participant|full participant|will not play|won't play|placed on ir|injured reserve|out for|doubtful|questionable|missed practice|not expected to play|ruled out)\b/i.test(
+    text,
+  );
+}
+
 export function formatPracticeTriple(practice: PracticeWeek): string {
   const cell = (m: PracticeMark | null) => m ?? "unlisted";
   return `${cell(practice.wed)}-${cell(practice.thu)}-${cell(practice.fri)}`;

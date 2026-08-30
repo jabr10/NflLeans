@@ -236,6 +236,24 @@ describe("Coach Spo injury-to-props", () => {
     expect(leans.some((l) => l.player === "Joe Burrow" && l.direction === "downgrade")).toBe(false);
   });
 
+  it("trade and box-score blurbs do not create a beat-note lean", () => {
+    const wr1 = depth("wr1", "Hunter Long", "TE1", 1);
+    const te2 = depth("te2", "Noah Gray", "TE2", 2);
+    const cards = side(
+      "ARI",
+      "Arizona Cardinals",
+      [wr1, te2],
+      [
+        listed(wr1, {
+          status: null,
+          practice: { wed: null, thu: null, fri: null },
+          beatNotes: ["Long has been traded from Jacksonville to the Cardinals, Ian Rapoport of NFL Network reports."],
+        }),
+      ],
+    );
+    expect(inferLeans(game(cards, side("LAC", "Los Angeles Chargers", [], [])))).toHaveLength(0);
+  });
+
   it("beat notes cannot create High confidence alone", () => {
     const wr1 = depth("wr1", "Tyreek Hill", "WR1", 1);
     const wr2 = depth("wr2", "Jaylen Waddle", "WR2", 2);
@@ -246,13 +264,15 @@ describe("Coach Spo injury-to-props", () => {
       [
         listed(wr1, {
           status: null,
-          practice: { wed: "Full", thu: "Full", fri: "Full" },
-          beatNotes: ["Hill is expected to be fine, a team source said."],
+          practice: { wed: null, thu: null, fri: null },
+          beatNotes: ["Hill (ankle) is week-to-week, a team source said."],
         }),
       ],
     );
     const leans = inferLeans(game(mia, side("NYJ", "New York Jets", [], [])));
+    expect(leans.length).toBeGreaterThan(0);
     expect(leans.every((l) => l.confidence !== "High")).toBe(true);
+    expect(leans[0].why.startsWith("Thin:")).toBe(true);
   });
 
   it("rest DNP that becomes Full does not elevate the backup", () => {

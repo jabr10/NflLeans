@@ -1,4 +1,4 @@
-import { formatPracticeTriple } from "./practice";
+import { formatPracticeTriple, looksLikeInjuryNote } from "./practice";
 import type {
   Confidence,
   DepthPlayer,
@@ -107,7 +107,12 @@ export function classifySituation(player: ListedPlayer): Situation {
   // Friday counts most: Friday DNP without official status is an Out-lean.
   if (practice.fri === "DNP") return "out_lean";
 
-  if (player.beatNotes.length > 0 && isStarterRole(player.role)) return "beat_only";
+  if (
+    player.beatNotes.some((note) => looksLikeInjuryNote(note)) &&
+    isStarterRole(player.role)
+  ) {
+    return "beat_only";
+  }
   return "drop";
 }
 
@@ -446,9 +451,7 @@ function applyQuestionable(
   player: ListedPlayer,
   out: Lean[],
 ) {
-  if (!isStarterRole(player.role) && player.role !== "WR2" && player.role !== "TE2") {
-    return;
-  }
+  if (!isStarterRole(player.role)) return;
   const family = volumeFamily(player);
   if (!family || family === "Sacks") return;
 

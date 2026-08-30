@@ -1,5 +1,6 @@
 import { inferLeans } from "@/lib/engine/inferLeans";
-import type { GameInput, Lean, ListedPlayer, TeamSide } from "@/lib/engine/types";
+import { looksLikeInjuryNote } from "@/lib/engine/practice";
+import type { GameInput, Lean, ListedPlayer, PracticeMark, TeamSide } from "@/lib/engine/types";
 import {
   athleteIdFromInjury,
   fetchDepthCharts,
@@ -60,6 +61,14 @@ function buildSide(
     if (!id || !name) continue;
     const status = mapOfficialStatus(injury.status);
     const { practice, rest } = mergeInjuryPractice(injury);
+    const notes = [injury.shortComment, injury.longComment].filter((x): x is string => Boolean(x));
+    const practiceSignal = (["wed", "thu", "fri"] as const).some((day) => {
+      const mark: PracticeMark | null = practice[day];
+      return mark === "DNP" || mark === "Limited";
+    });
+    if (!status && !practiceSignal) {
+      continue;
+    }
     const onDepth = depth.find((p) => p.id === id);
     const position = injury.athlete?.position?.abbreviation ?? onDepth?.position ?? "UNK";
     listed.push({
@@ -71,7 +80,7 @@ function buildSide(
       practice,
       status,
       rest,
-      beatNotes: [injury.shortComment, injury.longComment].filter((x): x is string => Boolean(x)),
+      beatNotes: notes,
       sources: ["ESPN injury report"],
     });
   }
@@ -98,6 +107,7 @@ function notesForGame(
     for (const injury of teamInjuries[team.id] ?? []) {
       const text = injury.shortComment || injury.longComment;
       if (!text) continue;
+      if (!mapOfficialStatus(injury.status) && !looksLikeInjuryNote(text)) continue;
       notes.push({
         player: injury.athlete?.displayName,
         team: team.abbr,
@@ -174,7 +184,7 @@ export async function loadBoard(): Promise<ResearchBoard> {
       home: buildSide(game, "home", homeDepth, injuryByTeam[game.home.id] ?? []),
       away: buildSide(game, "away", awayDepth, injuryByTeam[game.away.id] ?? []),
     };
-    const leans = inferLeans(input);
+    const leans = game.completed ? [] : inferLeans(input);
     return {
       game,
       elevates: leans.filter((l) => l.direction === "elevate"),

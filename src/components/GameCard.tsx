@@ -42,7 +42,11 @@ export function GameCard({
       </Link>
 
       {elevates.length === 0 && downgrades.length === 0 ? (
-        <p className="empty-pile">No injury-driven leans for this matchup.</p>
+        <p className="empty-pile">
+          {game.completed
+            ? "Final. Injury-to-prop leans attach to the next unplayed betting slate, not a finished exhibition."
+            : "No injury-driven leans for this matchup."}
+        </p>
       ) : (
         <div className="piles">
           {filter !== "downgraded" ? (
