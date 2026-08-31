@@ -1,31 +1,45 @@
+import type { BoardGame } from "@/lib/data/week";
 import type { Lean } from "@/lib/engine/types";
-import { formatKickoff } from "@/lib/format";
+import { formatKickCompact } from "@/lib/format";
+import { leanTag, pillTone } from "@/lib/leanDisplay";
 
-export function LeanRow({ lean }: { lean: Lean }) {
-  const up = lean.direction === "elevate";
+export function LeanRow({ lean, game }: { lean: Lean; game: BoardGame }) {
+  const tag = leanTag(lean);
+  const tone = pillTone(lean.propFamily);
+  const matchup = `${game.away.abbr} @ ${game.home.abbr}`;
+  const kick = formatKickCompact(game.kickoff);
+
   return (
-    <article className={`lean-row ${up ? "lean-up" : "lean-down"}`}>
-      <header className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-display text-[1.35rem] leading-none tracking-tight">{lean.player}</p>
-          <p className="mt-1 text-[13px] text-ink-soft">
-            {lean.team} · vs {lean.opponent} · {formatKickoff(lean.kickoff)}
+    <details className="lean-row">
+      <summary>
+        <div className="lean-text">
+          <div className="lean-top">
+            <span className="lean-name">{lean.player}</span>
+            <span className={`pill pill-${tone}`}>{lean.propFamily}</span>
+          </div>
+          <p className="lean-meta">
+            {tag ? <span className="meta-context">{tag.context} · </span> : null}
+            <span>{matchup}</span>
+            <span className="meta-kick"> · {kick}</span>
           </p>
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-1">
-          <span className={`stamp ${up ? "stamp-up" : "stamp-down"}`}>
-            {up ? "Elevate" : "Downgrade"}
-          </span>
-          <span className={`stamp stamp-conf conf-${lean.confidence.toLowerCase()}`}>
-            {lean.confidence}
-          </span>
+        <div className="lean-aside">
+          <span className={`pill pill-${tone}`}>{lean.propFamily}</span>
+          {tag?.rail ? <span className="tag-rail">{tag.rail}</span> : null}
+          {tag?.badge === "Q" ? <span className="status-badge">Q</span> : null}
+          {tag?.badge === "OUT" ? <span className="status-badge status-out">OUT</span> : null}
+          <svg className="chevron" viewBox="0 0 16 16" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M6.2 3.2a.75.75 0 0 1 1.06 0l4 4a.75.75 0 0 1 0 1.06l-4 4A.75.75 0 0 1 6.2 11.2L9.48 8 6.2 4.74a.75.75 0 0 1 0-1.54Z"
+            />
+          </svg>
         </div>
-      </header>
-      <p className="mt-3 text-[12px] font-medium uppercase tracking-[0.14em] text-ink-soft">
-        {lean.propFamily}
-      </p>
-      <p className="mt-2 text-[15px] leading-relaxed">{lean.why}</p>
-      <p className="mt-2 font-mono text-[11px] text-ink-soft">{lean.source}</p>
-    </article>
+      </summary>
+      <div className="beat">
+        {lean.why}
+        <span className="beat-src">{lean.source}</span>
+      </div>
+    </details>
   );
 }

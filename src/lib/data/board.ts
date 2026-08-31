@@ -145,11 +145,20 @@ export async function loadBoard(): Promise<ResearchBoard> {
   const extra = await loadExtraWeeks(thisWeek.resolved);
   warnings.push(...extra.warnings);
 
-  const slates = [thisWeek, ...extra.weeks];
-  const games = slates.flatMap((s) => s.games);
+  // Finished (or in-progress) preseason is never the betting board.
+  let boardWeek = thisWeek;
+  if (thisWeek.resolved.isPreseason && extra.weeks[0]) {
+    boardWeek = {
+      ...extra.weeks[0],
+      calendarWeek: thisWeek.calendarWeek ?? thisWeek.resolved,
+      exhibition: thisWeek.exhibition,
+    };
+  }
+
+  const games = boardWeek.games;
   const teamIds = games.flatMap((g) => [g.home.id, g.away.id]);
 
-  let injuryByTeam: Record<string, EspnInjury[]> = {};
+  const injuryByTeam: Record<string, EspnInjury[]> = {};
   try {
     const injuryJson = await fetchInjuries();
     for (const team of injuryJson.injuries ?? []) {
@@ -194,8 +203,8 @@ export async function loadBoard(): Promise<ResearchBoard> {
   });
 
   return {
-    thisWeek,
-    extraWeeks: extra.weeks,
+    thisWeek: boardWeek,
+    extraWeeks: [],
     games: gameBoards,
     warnings: Array.from(new Set(warnings)),
     timezone: "America/New_York",
