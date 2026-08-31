@@ -1,135 +1,127 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { ResearchBoard } from "@/lib/data/board";
-import { formatAsOf } from "@/lib/format";
-import { GameCard } from "./GameCard";
+import type { ResearchBoard } from "@/lib/data/types";
+import type { BoardGame } from "@/lib/data/types";
+import { exhibitionChip } from "@/lib/boardCopy";
+import type { Lean } from "@/lib/engine/types";
+import { formatSlateSpan } from "@/lib/format";
+import { AppHeader } from "./AppHeader";
+import { PileColumn } from "./PileColumn";
 
 type Filter = "all" | "elevated" | "downgraded";
+type Row = { lean: Lean; game: BoardGame };
+
+const PRACTICE_WARN = "Official NFL.com Wed–Thu–Fri practice columns";
+
+function sortRows(rows: Row[]): Row[] {
+  return [...rows].sort((a, b) => {
+    const kick = Date.parse(a.game.kickoff) - Date.parse(b.game.kickoff);
+    if (kick !== 0) return kick;
+    return a.lean.player.localeCompare(b.lean.player);
+  });
+}
+
+function weekHeadline(label: string, week: number, isPostseason: boolean): string {
+  if (isPostseason) return label;
+  if (/^week\s+/i.test(label)) return label;
+  return `Week ${week}`;
+}
 
 export function WeekBoard({ board }: { board: ResearchBoard }) {
   const [filter, setFilter] = useState<Filter>("all");
-  const [query, setQuery] = useState("");
+  const week = board.thisWeek;
+  const hasSlate = week.games.length > 0;
 
-  const q = query.trim().toLowerCase();
+  const { elevates, downgrades } = useMemo(() => {
+    const up: Row[] = [];
+    const down: Row[] = [];
+    for (const g of board.games) {
+      for (const lean of g.elevates) up.push({ lean, game: g.game });
+      for (const lean of g.downgrades) down.push({ lean, game: g.game });
+    }
+    return { elevates: sortRows(up), downgrades: sortRows(down) };
+  }, [board.games]);
 
-  const thisIds = new Set(board.thisWeek.games.map((g) => g.id));
-  const extraIds = new Set(board.extraWeeks.flatMap((w) => w.games.map((g) => g.id)));
+  const chip = exhibitionChip({
+    exhibition: week.exhibition,
+    weekLabel: week.resolved.label,
+    hasSlate,
+  });
 
-  const visible = useMemo(() => {
-    return board.games.filter((g) => {
-      const rows = [...g.elevates, ...g.downgrades];
-      if (q && !rows.some((r) => r.player.toLowerCase().includes(q))) return false;
-      if (filter === "elevated" && g.elevates.length === 0 && q === "") return true;
-      if (filter === "downgraded" && g.downgrades.length === 0 && q === "") return true;
-      return true;
-    });
-  }, [board.games, filter, q]);
-
-  const thisWeekGames = visible.filter((g) => thisIds.has(g.game.id));
-  const extraGames = visible.filter((g) => extraIds.has(g.game.id) && !thisIds.has(g.game.id));
-
-  const week = board.thisWeek.resolved;
-  const emptyThisWeek =
-    thisWeekGames.every((g) => g.elevates.length === 0 && g.downgrades.length === 0) ||
-    week.isPreseason;
+  const warnings = board.warnings.filter((w) => !w.includes(PRACTICE_WARN));
+  const span = formatSlateSpan(week.games, week.resolved.startDate, week.resolved.endDate);
+  const title = weekHeadline(week.resolved.label, week.resolved.week, week.resolved.isPostseason);
 
   return (
-    <div>
-      <div className="toolbar">
-        <div className="filters" role="tablist" aria-label="Lean direction">
-          {(
-            [
-              ["all", "All"],
-              ["elevated", "Elevated"],
-              ["downgraded", "Downgraded"],
-            ] as const
-          ).map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              role="tab"
-              aria-selected={filter === key}
-              className={`tap-target chip ${filter === key ? "chip-on" : ""}`}
-              onClick={() => setFilter(key)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-        <label className="sr-only" htmlFor="player-search">
-          Search players
-        </label>
-        <input
-          id="player-search"
-          className="tap-target search"
-          type="text"
-          inputMode="search"
-          autoComplete="off"
-          autoCorrect="off"
-          spellCheck={false}
-          placeholder="Search players"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-      </div>
-
-      {board.warnings.length > 0 ? (
-        <aside className="warn" aria-live="polite">
-          {board.warnings.map((w) => (
-            <p key={w}>{w}</p>
-          ))}
-        </aside>
-      ) : null}
-
-      <p className="asof">
-        America/New_York · research as of {formatAsOf(board.asOf)}. Betting only — not a sportsbook.
-      </p>
-
-      <section>
-        <h2 className="slate-title">{week.label}</h2>
-        {week.isPreseason || board.thisWeek.games.length === 0 ? (
-          <div className="honest">
-            <p>
-              {week.isPreseason
-                ? `${week.label} is still preseason. NflLeans does not invent injury-to-prop leans for an empty regular-season card.`
-                : "No NFL games on the board for this week in America/New_York."}
-            </p>
-            {board.extraWeeks.length > 0 ? (
-              <p>Week 1 regular-season games are posted below from the public ESPN slate.</p>
-            ) : null}
+    <>
+      <AppHeader asOf={board.asOf} />
+      <main className="page">
+        {chip ? (
+          <div className="live-chip">
+            <span className="live-dot" aria-hidden="true" />
+            <span>{chip}</span>
           </div>
         ) : null}
 
-        {emptyThisWeek && !week.isPreseason && thisWeekGames.length > 0 ? (
-          <div className="honest">
-            <p>
-              No injury-driven leans yet. Healthy players who were Full all week stay off the board.
-            </p>
-          </div>
-        ) : null}
+        {warnings.map((w) => (
+          <p key={w} className="warn-line">
+            {w}
+          </p>
+        ))}
 
-        <div className="slate">
-          {thisWeekGames.map((g) => (
-            <GameCard key={g.game.id} board={g} filter={filter} />
-          ))}
-        </div>
-      </section>
-
-      {extraGames.length > 0
-        ? board.extraWeeks.map((slate) => (
-            <section key={slate.resolved.label} className="mt-10">
-              <h2 className="slate-title">{slate.resolved.label} · available</h2>
-              <div className="slate">
-                {extraGames
-                  .filter((g) => slate.games.some((sg) => sg.id === g.game.id))
-                  .map((g) => (
-                    <GameCard key={g.game.id} board={g} filter={filter} />
-                  ))}
+        {!hasSlate ? (
+          <p className="empty-page">No betting slate yet</p>
+        ) : (
+          <>
+            <div className="week-bar">
+              <div className="week-kicker">
+                <h1 className="week-title">{title}</h1>
+                {span ? <p className="week-span">{span}</p> : null}
               </div>
-            </section>
-          ))
-        : null}
-    </div>
+              <div className="filters" role="tablist" aria-label="Lean direction">
+                {(
+                  [
+                    ["all", "All"],
+                    ["elevated", "Elevated"],
+                    ["downgraded", "Downgraded"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    role="tab"
+                    aria-selected={filter === key}
+                    className={`chip ${filter === key ? "chip-on" : ""}`}
+                    onClick={() => setFilter(key)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className={`columns ${filter === "all" ? "" : "columns-one"}`}>
+              {filter !== "downgraded" ? (
+                <PileColumn
+                  kind="elevates"
+                  count={elevates.length}
+                  rows={elevates}
+                  empty="No elevates yet."
+                />
+              ) : null}
+              {filter !== "elevated" ? (
+                <PileColumn
+                  kind="downgrades"
+                  count={downgrades.length}
+                  rows={downgrades}
+                  empty="No downgrades yet."
+                />
+              ) : null}
+            </div>
+          </>
+        )}
+      </main>
+    </>
   );
 }

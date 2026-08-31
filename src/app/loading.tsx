@@ -1,9 +1,12 @@
+import { AppHeader } from "@/components/AppHeader";
+
 export default function Loading() {
   return (
-    <main className="page">
-      <div className="honest">
-        <p>Loading research…</p>
-      </div>
-    </main>
+    <>
+      <AppHeader />
+      <main className="page">
+        <p className="empty-page">Loading research…</p>
+      </main>
+    </>
   );
 }

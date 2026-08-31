@@ -1,6 +1,6 @@
 import { inferLeans } from "@/lib/engine/inferLeans";
 import { looksLikeInjuryNote } from "@/lib/engine/practice";
-import type { GameInput, Lean, ListedPlayer, PracticeMark, TeamSide } from "@/lib/engine/types";
+import type { GameInput, ListedPlayer, PracticeMark, TeamSide } from "@/lib/engine/types";
 import {
   athleteIdFromInjury,
   fetchDepthCharts,
@@ -14,30 +14,10 @@ import {
   type NewsJson,
 } from "./espn";
 import { SourceError } from "./fetchPublic";
-import { loadExtraWeeks, loadSchedule, type BoardGame, type WeekSchedule } from "./week";
+import { loadExtraWeeks, loadSchedule } from "./week";
+import type { BoardGame, GameBoard, RawNote, ResearchBoard, WeekSchedule } from "./types";
 
-export interface RawNote {
-  player?: string;
-  team?: string;
-  text: string;
-  source: string;
-}
-
-export interface GameBoard {
-  game: BoardGame;
-  elevates: Lean[];
-  downgrades: Lean[];
-  rawNotes: RawNote[];
-}
-
-export interface ResearchBoard {
-  thisWeek: WeekSchedule;
-  extraWeeks: WeekSchedule[];
-  games: GameBoard[];
-  warnings: string[];
-  timezone: "America/New_York";
-  asOf: string;
-}
+export type { GameBoard, RawNote, ResearchBoard };
 
 function buildSide(
   game: BoardGame,
@@ -145,11 +125,20 @@ export async function loadBoard(): Promise<ResearchBoard> {
   const extra = await loadExtraWeeks(thisWeek.resolved);
   warnings.push(...extra.warnings);
 
-  const slates = [thisWeek, ...extra.weeks];
-  const games = slates.flatMap((s) => s.games);
+  // Finished (or in-progress) preseason is never the betting board.
+  let boardWeek = thisWeek;
+  if (thisWeek.resolved.isPreseason && extra.weeks[0]) {
+    boardWeek = {
+      ...extra.weeks[0],
+      calendarWeek: thisWeek.calendarWeek ?? thisWeek.resolved,
+      exhibition: thisWeek.exhibition,
+    };
+  }
+
+  const games = boardWeek.games;
   const teamIds = games.flatMap((g) => [g.home.id, g.away.id]);
 
-  let injuryByTeam: Record<string, EspnInjury[]> = {};
+  const injuryByTeam: Record<string, EspnInjury[]> = {};
   try {
     const injuryJson = await fetchInjuries();
     for (const team of injuryJson.injuries ?? []) {
@@ -194,8 +183,8 @@ export async function loadBoard(): Promise<ResearchBoard> {
   });
 
   return {
-    thisWeek,
-    extraWeeks: extra.weeks,
+    thisWeek: boardWeek,
+    extraWeeks: [],
     games: gameBoards,
     warnings: Array.from(new Set(warnings)),
     timezone: "America/New_York",

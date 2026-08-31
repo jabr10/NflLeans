@@ -1,45 +1,32 @@
 import { Suspense } from "react";
+import { AppHeader } from "@/components/AppHeader";
 import { LeansSection } from "@/components/LeansSection";
-import { ScheduleStrip } from "@/components/ScheduleStrip";
-import { loadSchedule } from "@/lib/data/week";
-import { SourceError } from "@/lib/data/fetchPublic";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-function LeansPending() {
+function BoardPending() {
   return (
-    <div className="honest" aria-live="polite">
-      <p>Schedule is up. Researching injury-to-prop leans…</p>
-    </div>
+    <>
+      <AppHeader />
+      <main className="page">
+        <div className="live-chip" aria-hidden="true">
+          <span className="live-dot" />
+          <span>Loading the board…</span>
+        </div>
+        <p className="empty-page" aria-live="polite">
+          Researching injury-to-prop leans…
+        </p>
+      </main>
+    </>
   );
 }
 
-export default async function Home() {
-  let scheduleError: string | null = null;
-  let schedule = null;
-  try {
-    schedule = await loadSchedule();
-  } catch (err) {
-    scheduleError =
-      err instanceof SourceError
-        ? err.message
-        : "The public NFL schedule could not be loaded.";
-  }
-
+export default function Home() {
   return (
-    <main className="page">
-      {schedule ? (
-        <ScheduleStrip schedule={schedule} />
-      ) : (
-        <div className="honest">
-          <p>{scheduleError}</p>
-        </div>
-      )}
-      <Suspense fallback={<LeansPending />}>
-        <LeansSection />
-      </Suspense>
-    </main>
+    <Suspense fallback={<BoardPending />}>
+      <LeansSection />
+    </Suspense>
   );
 }

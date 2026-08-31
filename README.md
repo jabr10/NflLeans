@@ -1,12 +1,10 @@
-# NflLeans
+# Footage
 
 Weekly NFL **betting research**. Not a sportsbook.
 
-Eyebrow: “Weekly betting research · not a sportsbook.”
+Footage is a new Next.js app. It is not the MLB BettingApp.
 
-NflLeans is a new Next.js app. It is not the MLB BettingApp.
-
-Home is **this NFL week** in `America/New_York`. Each game has two piles: **Elevates** and **Downgrades**. Healthy players who were Full all week do not appear.
+Home is the **next unplayed NFL slate** in `America/New_York` (Week 1 when preseason is finished). Each board has two piles: **Elevates** and **Downgrades**. Healthy players who were Full all week do not appear. Finished exhibitions collapse to a one-line chip — never a 16-game schedule.
 
 ## Coach Spo’s injury-to-props
 
@@ -25,7 +23,7 @@ Public ESPN endpoints only (schedule, injuries, depth charts, news). Legal publi
 
 Official NFL.com Wed–Thu–Fri practice columns are not available as structured public JSON. Practice days stay `unlisted` unless an ESPN comment names the day.
 
-If this calendar week is preseason or empty, the UI says so and still shows any available Week 1 / preseason slate.
+If this calendar week is preseason or empty, Footage says so in a one-line chip and shows the next unplayed regular-season board, or “No betting slate yet.”
 
 ## Stack
 
@@ -33,7 +31,7 @@ Next.js App Router, TypeScript, Vercel Hobby.
 
 - Fetches are cached. On Vercel the cache directory is `/tmp`. Cache writes never crash the request.
 - `maxDuration` is 60 seconds (Hobby cap).
-- First paint loads the schedule first. Leans stream in when ready.
+- First paint is the betting board (next unplayed slate), not a finished preseason schedule.
 
 ## Scripts
 
