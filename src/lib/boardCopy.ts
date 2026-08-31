@@ -1,5 +1,8 @@
 import type { ExhibitionStatus } from "@/lib/data/types";
 
+/** One-line product description under the Footage lockup. */
+export const PRODUCT_TAGLINE = "Who should see more playing time this week.";
+
 export function exhibitionChip(opts: {
   exhibition?: ExhibitionStatus;
   weekLabel: string;

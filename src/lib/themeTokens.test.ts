@@ -41,4 +41,11 @@ describe("Arthur color tokens", () => {
     expect(light).toContain("--pill-pass: #d7a6ff");
     expect(light).not.toContain("nflleans-theme");
   });
+
+  it("styles the lockup tagline with mute type", () => {
+    expect(css).toContain(".brand-tagline");
+    const tagline = block(css, ".brand-tagline {", ".brand-lockup {");
+    expect(tagline).toContain("color: var(--mute)");
+    expect(tagline).not.toContain("white-space: nowrap");
+  });
 });
