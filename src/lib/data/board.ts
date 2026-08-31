@@ -1,6 +1,6 @@
 import { inferLeans } from "@/lib/engine/inferLeans";
 import { looksLikeInjuryNote } from "@/lib/engine/practice";
-import type { GameInput, Lean, ListedPlayer, PracticeMark, TeamSide } from "@/lib/engine/types";
+import type { GameInput, ListedPlayer, PracticeMark, TeamSide } from "@/lib/engine/types";
 import {
   athleteIdFromInjury,
   fetchDepthCharts,
@@ -14,30 +14,10 @@ import {
   type NewsJson,
 } from "./espn";
 import { SourceError } from "./fetchPublic";
-import { loadExtraWeeks, loadSchedule, type BoardGame, type WeekSchedule } from "./week";
+import { loadExtraWeeks, loadSchedule } from "./week";
+import type { BoardGame, GameBoard, RawNote, ResearchBoard, WeekSchedule } from "./types";
 
-export interface RawNote {
-  player?: string;
-  team?: string;
-  text: string;
-  source: string;
-}
-
-export interface GameBoard {
-  game: BoardGame;
-  elevates: Lean[];
-  downgrades: Lean[];
-  rawNotes: RawNote[];
-}
-
-export interface ResearchBoard {
-  thisWeek: WeekSchedule;
-  extraWeeks: WeekSchedule[];
-  games: GameBoard[];
-  warnings: string[];
-  timezone: "America/New_York";
-  asOf: string;
-}
+export type { GameBoard, RawNote, ResearchBoard };
 
 function buildSide(
   game: BoardGame,

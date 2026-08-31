@@ -2,7 +2,7 @@
 
 @theme inline {
   --font-sans: var(--font-plex-sans);
-  --font-condensed: var(--font-plex-condensed);
+  --font-condensed: var(--font-barlow);
   --color-paper: #07090c;
   --color-ink: #f3f6fa;
   --color-mute: #8b97a8;
@@ -43,7 +43,8 @@ body {
 }
 
 .font-condensed {
-  font-family: var(--font-plex-condensed), "IBM Plex Sans Condensed", var(--font-plex-sans), sans-serif;
+  font-family: var(--font-barlow), "Barlow Condensed", var(--font-plex-sans), sans-serif;
+  font-weight: 800;
 }
 
 .page {
@@ -86,41 +87,24 @@ body {
 .brand-lockup {
   display: inline-flex;
   align-items: center;
-  height: 28px;
+  height: 22px;
 }
 
-.brand-oo-slot:empty {
-  display: none;
-}
-
-.brand-oo-slot:not(:empty) {
-  display: inline-flex;
-  align-items: center;
-  height: 28px;
-}
-
-.brand-oo-slot img {
+.brand-mark-img {
   display: block;
-  height: 28px;
   width: auto;
-}
-
-.brand-lockup:has(.brand-oo-slot:not(:empty)) .brand-mark {
-  display: none;
-}
-
-.brand-mark {
-  font-family: var(--font-plex-condensed), "IBM Plex Sans Condensed", sans-serif;
-  font-weight: 700;
-  font-style: normal;
-  font-size: 20px;
-  letter-spacing: 0.04em;
-  line-height: 1;
+  height: 22px;
+  max-width: 140px;
 }
 
 @media (min-width: 840px) {
-  .brand-mark {
-    font-size: 22px;
+  .brand-lockup {
+    height: 28px;
+  }
+
+  .brand-mark-img {
+    height: 28px;
+    max-width: none;
   }
 }
 
@@ -201,8 +185,8 @@ body {
 
 .week-title {
   margin: 0;
-  font-family: var(--font-plex-condensed), "IBM Plex Sans Condensed", sans-serif;
-  font-weight: 700;
+  font-family: var(--font-barlow), "Barlow Condensed", sans-serif;
+  font-weight: 800;
   font-style: italic;
   font-size: 32px;
   letter-spacing: -0.03em;
@@ -313,8 +297,8 @@ body {
 
 .pile-label {
   margin: 0;
-  font-family: var(--font-plex-condensed), "IBM Plex Sans Condensed", sans-serif;
-  font-weight: 700;
+  font-family: var(--font-barlow), "Barlow Condensed", sans-serif;
+  font-weight: 800;
   font-size: 13px;
   letter-spacing: 0.08em;
   line-height: 1;
@@ -381,6 +365,10 @@ body {
   text-overflow: ellipsis;
 }
 
+.lean-aside .pill {
+  display: none;
+}
+
 @media (min-width: 840px) {
   .lean-name {
     font-size: 16px;
@@ -393,10 +381,6 @@ body {
   .lean-aside .pill {
     display: inline-flex;
   }
-}
-
-.lean-aside .pill {
-  display: none;
 }
 
 .lean-meta {
@@ -589,8 +573,8 @@ body {
 
 .match-title {
   margin: 8px 0 0;
-  font-family: var(--font-plex-condensed), "IBM Plex Sans Condensed", sans-serif;
-  font-weight: 700;
+  font-family: var(--font-barlow), "Barlow Condensed", sans-serif;
+  font-weight: 800;
   font-style: italic;
   font-size: 28px;
   letter-spacing: -0.03em;

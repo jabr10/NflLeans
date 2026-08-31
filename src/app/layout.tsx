@@ -1,4 +1,4 @@
-import { IBM_Plex_Sans, IBM_Plex_Sans_Condensed } from "next/font/google";
+import { Barlow_Condensed, IBM_Plex_Sans } from "next/font/google";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
@@ -9,10 +9,10 @@ const sans = IBM_Plex_Sans({
   display: "swap",
 });
 
-const condensed = IBM_Plex_Sans_Condensed({
-  variable: "--font-plex-condensed",
+const condensed = Barlow_Condensed({
+  variable: "--font-barlow",
   subsets: ["latin"],
-  weight: ["600", "700"],
+  weight: ["800"],
   style: ["normal", "italic"],
   display: "swap",
 });

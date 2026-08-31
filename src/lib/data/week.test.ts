@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { exhibitionChip } from "@/lib/boardCopy";
 import type { ScoreboardJson } from "./espn";
 import {
-  exhibitionChip,
   nextWeekAfter,
   resolveBettingWeek,
   resolveWeekFromCalendar,

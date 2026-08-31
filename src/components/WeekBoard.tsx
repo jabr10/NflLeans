@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { ResearchBoard } from "@/lib/data/board";
-import type { BoardGame } from "@/lib/data/week";
-import { exhibitionChip } from "@/lib/data/week";
+import type { ResearchBoard } from "@/lib/data/types";
+import type { BoardGame } from "@/lib/data/types";
+import { exhibitionChip } from "@/lib/boardCopy";
 import type { Lean } from "@/lib/engine/types";
 import { formatSlateSpan } from "@/lib/format";
 import { AppHeader } from "./AppHeader";

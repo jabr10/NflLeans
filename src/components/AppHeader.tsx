@@ -5,11 +5,15 @@ export function AppHeader({ asOf }: { asOf?: string }) {
   return (
     <header className="masthead">
       <Link href="/" className="brand" aria-label="Footage">
-        <span className="brand-lockup">
-          {/* Arthur football-oo mark: drop the PNG in this slot to replace typeset FOOTAGE. */}
-          <span className="brand-oo-slot" aria-hidden="true" />
-          <span className="brand-mark">FOOTAGE</span>
-        </span>
+        <picture className="brand-lockup">
+          <source media="(min-width: 840px)" srcSet="/footage-wordmark.png" />
+          <img
+            className="brand-mark-img"
+            src="/footage-wordmark-compact.png"
+            alt=""
+            height={28}
+          />
+        </picture>
       </Link>
       {asOf ? <p className="asof">as of {formatAsOf(asOf)}</p> : null}
     </header>

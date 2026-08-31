@@ -8,56 +8,9 @@ import {
   type ScoreboardJson,
 } from "./espn";
 import { SourceError } from "./fetchPublic";
+import type { BoardGame, ExhibitionStatus, ResolvedWeek, WeekSchedule } from "./types";
 
-export interface ResolvedWeek {
-  seasonYear: number;
-  seasonType: number;
-  seasonTypeName: string;
-  week: number;
-  label: string;
-  detail?: string;
-  isPreseason: boolean;
-  isPostseason: boolean;
-  startDate?: string;
-  endDate?: string;
-}
-
-export interface BoardGame {
-  id: string;
-  name: string;
-  shortName: string;
-  kickoff: string;
-  completed: boolean;
-  statusText: string;
-  venue?: string;
-  notes: string[];
-  home: BoardTeam;
-  away: BoardTeam;
-  seasonType: number;
-  week: number;
-}
-
-export interface BoardTeam {
-  id: string;
-  abbr: string;
-  name: string;
-  logo?: string;
-}
-
-export interface ExhibitionStatus {
-  completed: number;
-  total: number;
-}
-
-export interface WeekSchedule {
-  resolved: ResolvedWeek;
-  calendarWeek: ResolvedWeek;
-  games: BoardGame[];
-  warnings: string[];
-  timezone: typeof NY_TZ;
-  asOf: string;
-  exhibition?: ExhibitionStatus;
-}
+export type { BoardGame, BoardTeam, ExhibitionStatus, ResolvedWeek, WeekSchedule } from "./types";
 
 const SEASON_TYPE_NAME: Record<number, string> = {
   1: "Preseason",
@@ -196,21 +149,6 @@ export function nextWeekAfter(
 
 export function shouldAdvanceSlate(games: BoardGame[]): boolean {
   return games.length > 0 && games.every((g) => g.completed);
-}
-
-export function exhibitionChip(opts: {
-  exhibition?: ExhibitionStatus;
-  weekLabel: string;
-  hasSlate: boolean;
-}): string | null {
-  const ex = opts.exhibition;
-  if (!ex || ex.total === 0) return null;
-  const final =
-    ex.completed === ex.total
-      ? `${ex.completed} exhibitions final`
-      : `${ex.completed} of ${ex.total} exhibitions complete`;
-  if (!opts.hasSlate) return `${final}.`;
-  return `${final} — ${opts.weekLabel} board is live.`;
 }
 
 function mapGames(events: EspnEvent[], type: number, week: number): BoardGame[] {

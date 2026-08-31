@@ -1,4 +1,4 @@
-import type { BoardGame } from "@/lib/data/week";
+import type { BoardGame } from "@/lib/data/types";
 import type { Lean } from "@/lib/engine/types";
 import { LeanRow } from "./LeanRow";
 
