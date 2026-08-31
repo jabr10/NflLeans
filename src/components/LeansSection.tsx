@@ -1,25 +1,21 @@
 import { loadBoard } from "@/lib/data/board";
 import { SourceError } from "@/lib/data/fetchPublic";
-import { AppHeader } from "./AppHeader";
 import { WeekBoard } from "./WeekBoard";
 
 export async function LeansSection() {
   let board;
+  let message: string | undefined;
   try {
     board = await loadBoard();
   } catch (err) {
-    const message =
+    message =
       err instanceof SourceError
         ? err.message
         : "The research board could not be built.";
-    return (
-      <>
-        <AppHeader />
-        <main className="page">
-          <p className="empty-page">{message}</p>
-        </main>
-      </>
-    );
+  }
+
+  if (!board) {
+    return <WeekBoard board={null} error={message} />;
   }
 
   return <WeekBoard board={board} />;

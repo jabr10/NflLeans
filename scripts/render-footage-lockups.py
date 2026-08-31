@@ -10,8 +10,13 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path("/workspace")
 FONT_PATH = Path("/tmp/footage-fonts/BarlowCondensed-ExtraBold.ttf")
-INK = (243, 246, 250, 255)  # #F3F6FA
-LACE = (7, 9, 12, 255)  # #07090C
+Color = tuple[int, int, int, int]
+INK: Color = (243, 246, 250, 255)  # #F3F6FA — dark-mode letters + pigskins
+LACE: Color = (7, 9, 12, 255)  # #07090C — dark-mode laces
+# Light lockup is the same drawing with ink/lace swapped so letters and
+# footballs stay readable on paper (#F3F6FA). Favicon stays the dark mark.
+LIGHT_INK: Color = LACE
+LIGHT_LACE: Color = INK
 CLEAR = (0, 0, 0, 0)
 
 
@@ -29,18 +34,26 @@ def football_polygon(cx: float, cy: float, rx: float, ry: float, n: int = 120) -
     return pts
 
 
-def draw_football(im: Image.Image, cx: float, cy: float, rx: float, ry: float) -> None:
+def draw_football(
+    im: Image.Image,
+    cx: float,
+    cy: float,
+    rx: float,
+    ry: float,
+    ink: Color = INK,
+    lace: Color = LACE,
+) -> None:
     overlay = Image.new("RGBA", im.size, CLEAR)
     draw = ImageDraw.Draw(overlay)
     pts = football_polygon(cx, cy, rx, ry)
-    draw.polygon(pts, fill=INK)
+    draw.polygon(pts, fill=ink)
 
     lace_w = rx * 0.86
     x0, x1 = cx - lace_w / 2, cx + lace_w / 2
     bar_h = max(2.0, ry * 0.07)
     head = max(4.0, rx * 0.10)
     # Shaft
-    draw.rectangle((x0 + head * 0.55, cy - bar_h / 2, x1 - head * 0.55, cy + bar_h / 2), fill=LACE)
+    draw.rectangle((x0 + head * 0.55, cy - bar_h / 2, x1 - head * 0.55, cy + bar_h / 2), fill=lace)
     # Arrowheads
     draw.polygon(
         [
@@ -48,7 +61,7 @@ def draw_football(im: Image.Image, cx: float, cy: float, rx: float, ry: float) -
             (x0 + head, cy - head * 0.55),
             (x0 + head, cy + head * 0.55),
         ],
-        fill=LACE,
+        fill=lace,
     )
     draw.polygon(
         [
@@ -56,7 +69,7 @@ def draw_football(im: Image.Image, cx: float, cy: float, rx: float, ry: float) -
             (x1 - head, cy - head * 0.55),
             (x1 - head, cy + head * 0.55),
         ],
-        fill=LACE,
+        fill=lace,
     )
     # Stitches
     stitch_n = 8
@@ -67,7 +80,7 @@ def draw_football(im: Image.Image, cx: float, cy: float, rx: float, ry: float) -
     for i in range(stitch_n):
         t = (i + 0.5) / stitch_n
         x = inner0 + (inner1 - inner0) * t
-        draw.rectangle((x - stitch_t / 2, cy - stitch_h / 2, x + stitch_t / 2, cy + stitch_h / 2), fill=LACE)
+        draw.rectangle((x - stitch_t / 2, cy - stitch_h / 2, x + stitch_t / 2, cy + stitch_h / 2), fill=lace)
 
     im.alpha_composite(overlay)
 
@@ -84,7 +97,15 @@ def trim(im: Image.Image, pad: int = 0) -> Image.Image:
     return im.crop((l, t, r, b))
 
 
-def wordmark(letter_px: int, ball_scale: float = 1.08, gap_f: float = 0.02, gap_balls: float = 0.02, gap_tage: float = 0.05) -> Image.Image:
+def wordmark(
+    letter_px: int,
+    ball_scale: float = 1.08,
+    gap_f: float = 0.02,
+    gap_balls: float = 0.02,
+    gap_tage: float = 0.05,
+    ink: Color = INK,
+    lace: Color = LACE,
+) -> Image.Image:
     font = ImageFont.truetype(str(FONT_PATH), letter_px)
     f_box = font.getbbox("F")
     tage_box = font.getbbox("TAGE")
@@ -112,17 +133,17 @@ def wordmark(letter_px: int, ball_scale: float = 1.08, gap_f: float = 0.02, gap_
     cy = pad + content_h / 2
 
     x = float(pad)
-    draw.text((x - f_box[0], letter_top - f_box[1]), "F", font=font, fill=INK)
+    draw.text((x - f_box[0], letter_top - f_box[1]), "F", font=font, fill=ink)
     x += f_w + gap1
 
     bx = x + ball_w / 2
-    draw_football(im, bx, cy, ball_w / 2, ball_h / 2)
+    draw_football(im, bx, cy, ball_w / 2, ball_h / 2, ink=ink, lace=lace)
     x += ball_w + gap2
     bx = x + ball_w / 2
-    draw_football(im, bx, cy, ball_w / 2, ball_h / 2)
+    draw_football(im, bx, cy, ball_w / 2, ball_h / 2, ink=ink, lace=lace)
     x += ball_w + gap3
 
-    draw.text((x - tage_box[0], letter_top - tage_box[1]), "TAGE", font=font, fill=INK)
+    draw.text((x - tage_box[0], letter_top - tage_box[1]), "TAGE", font=font, fill=ink)
     return trim(im, pad=max(2, letter_px // 50))
 
 
@@ -135,6 +156,24 @@ def favicon(size: int = 512) -> Image.Image:
     return im.convert("RGB")
 
 
+def export_wordmarks(public: Path, ink: Color, lace: Color, suffix: str = "") -> tuple[Path, Path]:
+    full = wordmark(letter_px=280, ink=ink, lace=lace)
+    # Target ~3x header height (~84px) while keeping native detail.
+    target_h = 168
+    scale = target_h / full.height
+    full_out = full.resize((max(1, int(full.width * scale)), target_h), Image.Resampling.LANCZOS)
+    full_path = public / f"footage-wordmark{suffix}.png"
+    full_out.save(full_path, "PNG")
+
+    compact_src = wordmark(letter_px=200, ink=ink, lace=lace)
+    compact_w = 280  # 2x of ~140px
+    scale = compact_w / compact_src.width
+    compact_out = compact_src.resize((compact_w, max(1, int(compact_src.height * scale))), Image.Resampling.LANCZOS)
+    compact_path = public / f"footage-wordmark-compact{suffix}.png"
+    compact_out.save(compact_path, "PNG")
+    return full_path, compact_path
+
+
 def main() -> None:
     public = ROOT / "public"
     brand = public / "brand"
@@ -142,20 +181,8 @@ def main() -> None:
     brand.mkdir(parents=True, exist_ok=True)
     public.mkdir(parents=True, exist_ok=True)
 
-    full = wordmark(letter_px=280)
-    # Target ~3x header height (~84px) while keeping native detail.
-    target_h = 168
-    scale = target_h / full.height
-    full_out = full.resize((max(1, int(full.width * scale)), target_h), Image.Resampling.LANCZOS)
-    full_path = public / "footage-wordmark.png"
-    full_out.save(full_path, "PNG")
-
-    compact_src = wordmark(letter_px=200)
-    compact_w = 280  # 2x of ~140px
-    scale = compact_w / compact_src.width
-    compact_out = compact_src.resize((compact_w, max(1, int(compact_src.height * scale))), Image.Resampling.LANCZOS)
-    compact_path = public / "footage-wordmark-compact.png"
-    compact_out.save(compact_path, "PNG")
+    full_path, compact_path = export_wordmarks(public, INK, LACE)
+    light_full, light_compact = export_wordmarks(public, LIGHT_INK, LIGHT_LACE, suffix="-light")
 
     mark = favicon(512)
     mark_path = public / "footage-mark.png"
@@ -168,8 +195,10 @@ def main() -> None:
     apple.save(app / "apple-icon.png", "PNG")
     icon32.save(public / "favicon-32.png", "PNG")
 
-    print(f"full {full_out.size} -> {full_path}")
-    print(f"compact {compact_out.size} -> {compact_path}")
+    print(f"full {full_path}")
+    print(f"compact {compact_path}")
+    print(f"light full {light_full}")
+    print(f"light compact {light_compact}")
     print(f"mark {mark.size} -> {mark_path}")
     print(f"icon {icon192.size} apple {apple.size}")
 

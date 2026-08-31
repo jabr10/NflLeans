@@ -3,15 +3,16 @@
 @theme inline {
   --font-sans: var(--font-plex-sans);
   --font-condensed: var(--font-barlow);
-  --color-paper: #07090c;
-  --color-ink: #f3f6fa;
-  --color-mute: #8b97a8;
-  --color-hairline: #243041;
-  --color-card: #121820;
-  --color-elevate: #c6f23a;
-  --color-downgrade: #ffb020;
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-mute: var(--mute);
+  --color-hairline: var(--hairline);
+  --color-card: var(--card);
+  --color-elevate: var(--elevate);
+  --color-downgrade: var(--downgrade);
 }
 
+/* Arthur dark is locked. Light is the same board with inverted luminance. */
 :root {
   color-scheme: dark;
   --paper: #07090c;
@@ -21,6 +22,8 @@
   --card: #121820;
   --elevate: #c6f23a;
   --downgrade: #ffb020;
+  --elevate-ink: #c6f23a;
+  --downgrade-ink: #ffb020;
   --pill-rec: #8fb4ff;
   --pill-rec-bg: #1c2a44;
   --pill-rush: #ffc978;
@@ -29,6 +32,29 @@
   --pill-pass-bg: #241830;
   --chip-bg: #10140c;
   --chip-line: #2a3a14;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+    --paper: #f3f6fa;
+    --ink: #07090c;
+    --mute: #5c6778;
+    --hairline: #c9d2de;
+    --card: #ffffff;
+    --elevate: #c6f23a;
+    --downgrade: #ffb020;
+    --elevate-ink: color-mix(in srgb, #c6f23a 42%, #07090c);
+    --downgrade-ink: color-mix(in srgb, #ffb020 55%, #07090c);
+    --pill-rec: #8fb4ff;
+    --pill-rec-bg: #1c2a44;
+    --pill-rush: #ffc978;
+    --pill-rush-bg: #2a2414;
+    --pill-pass: #d7a6ff;
+    --pill-pass-bg: #241830;
+    --chip-bg: #eef6d0;
+    --chip-line: #c5d48a;
+  }
 }
 
 html,
@@ -90,6 +116,20 @@ body {
   height: 22px;
 }
 
+.brand-lockup-light {
+  display: none;
+}
+
+@media (prefers-color-scheme: light) {
+  .brand-lockup-dark {
+    display: none;
+  }
+
+  .brand-lockup-light {
+    display: inline-flex;
+  }
+}
+
 .brand-mark-img {
   display: block;
   width: auto;
@@ -108,11 +148,69 @@ body {
   }
 }
 
+.mast-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
 .asof {
   margin: 0;
   font-size: 11px;
   color: var(--mute);
   white-space: nowrap;
+}
+
+.refresh-btn {
+  display: none;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--mute);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.refresh-btn:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+@media (min-width: 840px) {
+  .refresh-btn {
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+.pull-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  overflow: hidden;
+  color: var(--mute);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.pull-root[data-armed] .pull-slot,
+.pull-root[data-refreshing] .pull-slot {
+  color: var(--elevate-ink);
+}
+
+.pull-root:not([data-dragging]) .pull-slot {
+  transition: height 160ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pull-root:not([data-dragging]) .pull-slot {
+    transition: none;
+  }
 }
 
 .live-chip {
@@ -125,7 +223,7 @@ body {
   border-radius: 6px;
   border: 1px solid var(--chip-line);
   background: var(--chip-bg);
-  color: var(--elevate);
+  color: var(--elevate-ink);
   font-size: 12.5px;
   font-weight: 500;
   line-height: 1;
@@ -238,9 +336,9 @@ body {
 }
 
 .chip-on {
-  background: #ffffff;
-  color: #000000;
-  border-color: #ffffff;
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
 }
 
 .columns {
@@ -288,11 +386,11 @@ body {
 }
 
 .pile-up {
-  color: var(--elevate);
+  color: var(--elevate-ink);
 }
 
 .pile-down {
-  color: var(--downgrade);
+  color: var(--downgrade-ink);
 }
 
 .pile-label {

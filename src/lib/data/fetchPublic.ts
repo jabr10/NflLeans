@@ -1,4 +1,16 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { readCache, writeCache } from "./cache";
+
+const freshAls = new AsyncLocalStorage<true>();
+
+/** Skip the on-disk ESPN cache for this async subtree (pull-to-refresh). */
+export function runFresh<T>(fn: () => Promise<T>): Promise<T> {
+  return freshAls.run(true, fn);
+}
+
+export function isFreshRequest(): boolean {
+  return freshAls.getStore() === true;
+}
 
 const UA = "NflLeans/1.0 (weekly research; +https://github.com/jabr10/NflLeans)";
 
@@ -22,7 +34,7 @@ export async function fetchPublicJson<T>(
     transform?: (raw: unknown) => T;
   },
 ): Promise<T> {
-  const cached = await readCache<T>(opts.cacheKey);
+  const cached = isFreshRequest() ? null : await readCache<T>(opts.cacheKey);
   if (cached !== null) return cached;
 
   const timeoutMs = opts.timeoutMs ?? 12_000;
