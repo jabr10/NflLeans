@@ -1,13 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { ResearchBoard } from "@/lib/data/types";
 import type { BoardGame } from "@/lib/data/types";
 import { exhibitionChip } from "@/lib/boardCopy";
+import { fetchLiveBoard } from "@/lib/boardRefresh";
 import type { Lean } from "@/lib/engine/types";
 import { formatSlateSpan } from "@/lib/format";
 import { AppHeader } from "./AppHeader";
 import { PileColumn } from "./PileColumn";
+import { usePullToRefresh } from "./usePullToRefresh";
 
 type Filter = "all" | "elevated" | "downgraded";
 type Row = { lean: Lean; game: BoardGame };
@@ -28,34 +30,87 @@ function weekHeadline(label: string, week: number, isPostseason: boolean): strin
   return `Week ${week}`;
 }
 
-export function WeekBoard({ board }: { board: ResearchBoard }) {
+export function WeekBoard({
+  board: initial,
+  error: loadError,
+}: {
+  board: ResearchBoard | null;
+  error?: string;
+}) {
+  const [board, setBoard] = useState<ResearchBoard | null>(initial);
+  const [error, setError] = useState<string | null>(loadError ?? null);
   const [filter, setFilter] = useState<Filter>("all");
-  const week = board.thisWeek;
-  const hasSlate = week.games.length > 0;
+
+  const reload = useCallback(async () => {
+    const next = await fetchLiveBoard();
+    setBoard(next);
+    setError(null);
+  }, []);
+
+  const onRefresh = useCallback(async () => {
+    try {
+      await reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not refresh the board.");
+    }
+  }, [reload]);
+
+  const { pull, armed, dragging, refreshing, refresh } = usePullToRefresh(onRefresh);
+
+  const week = board?.thisWeek;
+  const hasSlate = Boolean(week && week.games.length > 0);
 
   const { elevates, downgrades } = useMemo(() => {
     const up: Row[] = [];
     const down: Row[] = [];
+    if (!board) return { elevates: up, downgrades: down };
     for (const g of board.games) {
       for (const lean of g.elevates) up.push({ lean, game: g.game });
       for (const lean of g.downgrades) down.push({ lean, game: g.game });
     }
     return { elevates: sortRows(up), downgrades: sortRows(down) };
-  }, [board.games]);
+  }, [board]);
 
-  const chip = exhibitionChip({
-    exhibition: week.exhibition,
-    weekLabel: week.resolved.label,
-    hasSlate,
-  });
+  const chip = week
+    ? exhibitionChip({
+        exhibition: week.exhibition,
+        weekLabel: week.resolved.label,
+        hasSlate,
+      })
+    : null;
 
-  const warnings = board.warnings.filter((w) => !w.includes(PRACTICE_WARN));
-  const span = formatSlateSpan(week.games, week.resolved.startDate, week.resolved.endDate);
-  const title = weekHeadline(week.resolved.label, week.resolved.week, week.resolved.isPostseason);
+  const warnings = (board?.warnings ?? []).filter((w) => !w.includes(PRACTICE_WARN));
+  const span = week ? formatSlateSpan(week.games, week.resolved.startDate, week.resolved.endDate) : "";
+  const title = week ? weekHeadline(week.resolved.label, week.resolved.week, week.resolved.isPostseason) : "";
+
+  let pullLabel = "";
+  if (refreshing) pullLabel = "Refreshing research…";
+  else if (armed) pullLabel = "Release to refresh";
+  else if (pull > 12) pullLabel = "Pull to refresh";
 
   return (
-    <>
-      <AppHeader asOf={board.asOf} />
+    <div
+      className="pull-root"
+      data-dragging={dragging ? "true" : undefined}
+      data-armed={armed ? "true" : undefined}
+      data-refreshing={refreshing ? "true" : undefined}
+      aria-busy={refreshing}
+    >
+      <div
+        className="pull-slot"
+        style={{ height: pull }}
+        role="status"
+        aria-live="polite"
+        aria-hidden={!pullLabel}
+      >
+        {pullLabel ? (
+          <>
+            <span className="live-dot" aria-hidden="true" />
+            <span>{pullLabel}</span>
+          </>
+        ) : null}
+      </div>
+      <AppHeader asOf={board?.asOf} onRefresh={() => void refresh()} refreshing={refreshing} />
       <main className="page">
         {chip ? (
           <div className="live-chip">
@@ -64,13 +119,21 @@ export function WeekBoard({ board }: { board: ResearchBoard }) {
           </div>
         ) : null}
 
+        {error ? (
+          <p className="warn-line" role="alert">
+            {error}
+          </p>
+        ) : null}
+
         {warnings.map((w) => (
           <p key={w} className="warn-line">
             {w}
           </p>
         ))}
 
-        {!hasSlate ? (
+        {!board ? (
+          <p className="empty-page">Pull down or refresh to load the board.</p>
+        ) : !hasSlate ? (
           <p className="empty-page">No betting slate yet</p>
         ) : (
           <>
@@ -122,6 +185,6 @@ export function WeekBoard({ board }: { board: ResearchBoard }) {
           </>
         )}
       </main>
-    </>
+    </div>
   );
 }
