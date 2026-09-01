@@ -1,5 +1,6 @@
 import { Barlow_Condensed, IBM_Plex_Sans } from "next/font/google";
 import type { Metadata, Viewport } from "next";
+import { PRODUCT_TAGLINE } from "@/lib/boardCopy";
 import "./globals.css";
 
 const sans = IBM_Plex_Sans({
@@ -19,7 +20,11 @@ const condensed = Barlow_Condensed({
 
 export const metadata: Metadata = {
   title: "Footage",
-  description: "Weekly NFL betting research. Not a sportsbook.",
+  description: PRODUCT_TAGLINE,
+  openGraph: {
+    title: "Footage",
+    description: PRODUCT_TAGLINE,
+  },
 };
 
 export const viewport: Viewport = {
